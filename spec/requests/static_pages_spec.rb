@@ -1,4 +1,5 @@
 require 'spec_helper'
+include ActionView::Helpers::TextHelper
 
 describe "Static pages" do
 
@@ -8,6 +9,21 @@ describe "Static pages" do
     it { should have_selector('h1',    text: heading) }
     it { should have_selector('title', text: full_title(page_title)) }
   end
+
+  it "should have the right links on the layout" do
+    visit root_path
+    click_link "About"
+    page.should have_selector 'title', text: full_title('About Us')
+    click_link "Help"
+    page.should have_selector 'title', text: full_title('Help')
+    click_link "Contact"
+    page.should have_selector 'title', text: full_title('Contact')
+    click_link "sample app"
+    page.should have_selector 'title', text: full_title('')
+    click_link "Home"
+    click_link "Sign up now!"
+    page.should have_selector 'title', text: full_title('Sign up')
+  end  
 
   describe "Home page" do
     before { visit root_path }
@@ -30,9 +46,18 @@ describe "Static pages" do
         user.feed.each do |item|
           page.should have_selector("li##{item.id}", text: item.content)
         end
+        page.should have_selector('section h1', text: user.name)
+        page.should have_selector('section span', text: pluralize(Micropost.count.to_s, "micropost"))
       end
-    end
-    
+
+      describe "pagination" do
+        it "should paginate the feed" do
+          30.times { FactoryGirl.create(:micropost, user: user, content: "Consectetur adipiscing elit")}
+          visit root_path
+          page.should have_selector("div.pagination")
+        end
+      end 
+    end 
   end
 
   describe "Help page" do
@@ -55,19 +80,4 @@ describe "Static pages" do
     let(:page_title) { 'Contact' }
     it_should_behave_like "all static pages"
   end
-
-  it "should have the right links on the layout" do
-    visit root_path
-    click_link "About"
-    page.should have_selector 'title', text: full_title('About Us')
-    click_link "Help"
-    page.should have_selector 'title', text: full_title('Help')
-    click_link "Contact"
-    page.should have_selector 'title', text: full_title('Contact')
-    click_link "Home"
-    click_link "Sign up now!"
-    page.should have_selector 'title', text: full_title('Sign up')
-    click_link "sample app"
-    page.should have_selector 'title', text: full_title('')
-  end  
 end
